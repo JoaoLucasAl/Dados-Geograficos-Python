@@ -1,0 +1,2 @@
+# Dados-Geograficos-Python
+Usuários de um determinado nicho, para descrever locais de interesse em uma área geográfica, tem a necessidade de armazenar pontos geográficos (latitude e longitude) com uma descrição (Ex. escola, farmácia). Para tal aplicação um backend é necessário. Desenvolva um backend em python que permita o cadastro, visualização, alteração e remoção de usuários e pontos geográficos. Os dados devem ser armazenados em um banco de dados MongoDB.
