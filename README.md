@@ -9,6 +9,7 @@ pip install uvicorn[standard]
 pip install pymongo
 pip install pytest
 pip install requests
+pip install email-validator
 ```
 
 E rode o seguinte comando:
