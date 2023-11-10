@@ -17,17 +17,13 @@ async def root():
 
 @app.get('/ConsultarPontos')
 async def get_all_dados():
-    dados = []
-    for dado in colection_dados.find():
-        dados.append(dados_helper(dado))
+    dados = [dados_helper(dado) for dado in colection_dados.find()]
     return "Pontos:", dados
 
 
 @app.get('/ConsultarUsuarios')
 async def get_all_users():
-    users = []
-    for user in colection_users.find():
-        users.append(users_helper(user))
+    users = [users_helper(user) for user in colection_users.find()]
     return "Usuarios", users
 
 
@@ -57,28 +53,24 @@ async def post_dados(latitude: float, longitude: float, email: str, description:
 async def post_user(email: str, nome: str):
     if colection_users.find_one({"email": email}):
         raise HTTPException(status_code=400, detail="Email já cadastrado")
-    else:
-        if validate_email(email):
+    if validate_email(email):
 
-            colection_users.insert_one({
-                "email": email,
-                "nome": nome
-            })
-            return {
-                "email": email,
-                "nome": nome
-            }
-        else:
-            raise HTTPException(status_code=400, detail="Email invalido")
+        colection_users.insert_one({
+            "email": email,
+            "nome": nome
+        })
+        return {
+            "email": email,
+            "nome": nome
+        }
+    else:
+        raise HTTPException(status_code=400, detail="Email invalido")
 
 
 @app.delete('/DeletarPonto/')
 async def delete_dado(id: str, user: str):
     id = ObjectId(id)
-    emails = []
-    for item in colection_users.find({"nome":user}):
-        emails.append(get_email(item))
-
+    emails = [get_email(item) for item in colection_users.find({"nome":user})]
     if colection_dados.find_one({"_id": id}):
         if dados_get_email(colection_dados.find_one({"_id": id})) in emails:
             colection_dados.delete_one({"_id": id})
@@ -91,41 +83,36 @@ async def delete_dado(id: str, user: str):
 
 @app.delete('/DeletarUsuario/')
 async def delete_user(email: str):
-    if colection_users.find_one({"email": email}):
-        if colection_dados.find_one({"email": email}):
-            raise HTTPException(status_code=400, detail="Delete todos os pontos atrelados ao usuario antes")
-        else:
-            colection_users.delete_one({"email": email})
-            return "Usuario deletado com sucesso"
-    else:
+    if not colection_users.find_one({"email": email}):
         raise HTTPException(status_code=400, detail="Usuario invalido")
+    if colection_dados.find_one({"email": email}):
+        raise HTTPException(status_code=400, detail="Delete todos os pontos atrelados ao usuario antes")
+    colection_users.delete_one({"email": email})
+    return "Usuario deletado com sucesso"
 
 
 @app.patch('/AlterarPonto/')
 async def alter_dados(id: str, latitude: float | None = None, longitude: float | None = None,
                       description: str | None = None, email: str | None = None):
     id = ObjectId(id)
-    if colection_dados.find_one({"_id": id}):
-        if latitude is not None:
-            colection_dados.update_one({"_id": id}, {"$set": {"latitude": latitude}})
-        if longitude is not None:
-            colection_dados.update_one({"_id": id}, {"$set": {"longitude": longitude}})
-        if description is not None:
-            colection_dados.update_one({"_id": id}, {"$set": {"description": description}})
-        if email is not None:
-            if colection_users.find_one({"email": email}):
-                emails = []
-                for item in colection_users.find({"email": email}):
-                    emails.append(get_email(item))
-                if email in emails:
-                    colection_dados.update_one({"_id": id}, {"$set": {"email": email}})
-                else:
-                    raise HTTPException(status_code=400, detail="Email incorreto")
-            else:
-                raise HTTPException(status_code=400, detail="Usuario invalido")
-        return "Ponto alterado com sucesso"
-    else:
+    if not colection_dados.find_one({"_id": id}):
         raise HTTPException(status_code=400, detail="ID invalido")
+    if latitude is not None:
+        colection_dados.update_one({"_id": id}, {"$set": {"latitude": latitude}})
+    if longitude is not None:
+        colection_dados.update_one({"_id": id}, {"$set": {"longitude": longitude}})
+    if description is not None:
+        colection_dados.update_one({"_id": id}, {"$set": {"description": description}})
+    if email is not None:
+        if colection_users.find_one({"email": email}):
+            emails = [get_email(item) for item in colection_users.find({"email": email})]
+            if email in emails:
+                colection_dados.update_one({"_id": id}, {"$set": {"email": email}})
+            else:
+                raise HTTPException(status_code=400, detail="Email incorreto")
+        else:
+            raise HTTPException(status_code=400, detail="Usuario invalido")
+    return "Ponto alterado com sucesso"
 
 
 @app.patch('/AlterarUsuario/')
